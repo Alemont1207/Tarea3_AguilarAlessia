@@ -1,4 +1,16 @@
-.Rproj.user
+# Archivos de R / RStudio
+.Rproj.user/
 .Rhistory
 .RData
 .Ruserdata
+*_cache/
+*_files/
+
+# Clon del docente
+base/
+
+# Datos generados (pesados)
+data/*.csv
+
+# Temporales de Excel (el .xlsx SÍ se versiona)
+~$*
