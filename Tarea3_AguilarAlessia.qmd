@@ -3,20 +3,112 @@ title: "Tarea3_AguilarAlessia"
 format: html
 editor: visual
 ---
+
 ```{r}
+#| label: setup
+#| include: false
 source("cod/funciones_tarea3.R")
 params <- read.csv("config/parametros_tarea3.csv", sep = ";")
 df <- read.csv("data/transacciones_2025.csv", sep = ";")
+cantones <- read.csv("data/cantones.csv", fileEncoding = "UTF-8")
+tasa.anual    <- as.numeric(params$valor[params$parametro == "tasa.anual"])
+canal.interes <- params$valor[params$parametro == "canal.interes"]
 
-ventana  <- as.numeric(params$valor[params$parametro == "ventana"])
-k.alerta <- as.numeric(params$valor[params$parametro == "k.alerta"])
+ventana       <- as.numeric(params$valor[params$parametro == "ventana"])
+k.alerta      <- as.numeric(params$valor[params$parametro == "k.alerta"])
+canal.benford <- params$valor[params$parametro == "canal.benford"]
 
-res1ab <- alerta.movil(df, ventana, k.alerta)
+# Ejercicio 1
+res1  <- alerta.movil(df, ventana, k.alerta)
 res1c <- alerta.movil(df, 7, 2)
+
+# Ejercicio 2
+res2      <- benford.canton(df, canal.benford, cantones)
+res2d     <- benford.canton(df, "Web", cantones)
+mad.canal <- benford.mad(df$monto_crc[df$canal == canal.benford])
+
+# Ejercicio 3
+res3  <- valor.acumulado(df, tasa.anual, canal.interes)
+res3c <- valor.acumulado(df, 0.06, "App")  
 ```
 
 ```{r}
-cat("RESULTADO_1A =", sum(res1ab$alerta, na.rm = TRUE), "\n")
-cat("RESULTADO_1B =", format(res1ab$fecha[which(res1$alerta)[1]]), "\n")
+#| label: respuestas
+#| echo: false
+#| comment: ""
+cat("RESULTADO_1A =", sum(res1$alerta, na.rm = TRUE), "\n")
+cat("RESULTADO_1B =", format(res1$fecha[which(res1$alerta)[1]]), "\n")
 cat("RESULTADO_1C =", sum(res1c$alerta, na.rm = TRUE), "\n")
+cat("RESULTADO_2A =", sprintf("%.4f", mad.canal), "\n")
+cat("RESULTADO_2B =", res2$canton[1], "\n")
+cat("RESULTADO_2C =", sum(res2$mad > 0.015), "\n")
+cat("RESULTADO_2D =", res2d$canton[1], "\n")
+cat("RESULTADO_3A =", sprintf("%.2f", res3$va), "\n")
+cat("RESULTADO_3B =", sprintf("%.2f", res3$interes), "\n")
+cat("RESULTADO_3C =", sprintf("%.2f", res3c$va), "\n")
+```
+
+```{r}
+#| label: grafico-ej1
+library(ggplot2)
+
+g1 <- ggplot(res1, aes(x = fecha, y = n.tx)) +
+  geom_line(color = "grey50") +
+  geom_point(data = subset(res1, alerta %in% TRUE),
+             color = "red", size = 2) +
+  labs(title = "Transacciones diarias y días con alerta",
+       x = "Fecha", y = "Número de transacciones") +
+  theme_minimal()
+
+dir.create("info/figuras", showWarnings = FALSE, recursive = TRUE)
+ggsave("info/figuras/ej1_alertas.png", g1, width = 8, height = 4.5, dpi = 150)
+g1
+```
+
+```{r}
+#| label: grafico-ej2
+library(ggplot2)
+
+x.canal <- df$monto_crc[df$canal == canal.benford]
+dig.canal <- x.canal %/% 10^floor(log10(x.canal))
+
+graf.benford <- data.frame(
+  digito  = 1:9,
+  p.obs   = tabulate(as.integer(dig.canal), nbins = 9) / length(dig.canal),
+  benford = log10(1 + 1 / (1:9))
+)
+
+g2 <- ggplot(graf.benford, aes(x = digito)) +
+  geom_col(aes(y = p.obs), fill = "steelblue", alpha = 0.8) +
+  geom_line(aes(y = benford), color = "red", linewidth = 1) +
+  geom_point(aes(y = benford), color = "red", size = 2) +
+  scale_x_continuous(breaks = 1:9) +
+  labs(title = paste("Primer dígito en el canal", canal.benford, "vs. Ley de Benford"),
+       x = "Primer dígito", y = "Proporción") +
+  theme_minimal()
+
+ggsave("info/figuras/ej2_benford.png", g2, width = 8, height = 4.5, dpi = 150)
+g2
+```
+Conclusión: los cantones con mayor MAD como Montes de Oca y Heredia tienen pocas transacciones, así que su desviación respecto a Benford se explica por el tamaño de muestra y no es evidencia de fraude.
+
+```{r}
+#| label: grafico-ej3
+library(ggplot2)
+
+t3 <- res3$tabla
+graf3 <- rbind(
+  data.frame(mes = t3$mes, tipo = "Monto del mes",         valor = t3$monto),
+  data.frame(mes = t3$mes, tipo = "Valor al 31-dic",       valor = t3$monto * t3$factor)
+)
+
+g3 <- ggplot(graf3, aes(x = factor(mes), y = valor, fill = tipo)) +
+  geom_col(position = "dodge") +
+  scale_y_continuous(labels = scales::label_number(scale = 1e-6, suffix = " M")) +
+  labs(title = paste("Canal", canal.interes, "- monto mensual y valor acumulado al 31-dic"),
+       x = "Mes", y = "Colones (millones)", fill = NULL) +
+  theme_minimal()
+
+ggsave("info/figuras/ej3_valor_acumulado.png", g3, width = 8, height = 4.5, dpi = 150)
+g3
 ```
