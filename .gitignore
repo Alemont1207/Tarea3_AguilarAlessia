@@ -5,6 +5,8 @@
 .Ruserdata
 *_cache/
 *_files/
+.RDataTmp
+.Rproj.user/
 
 # Clon del docente
 base/
