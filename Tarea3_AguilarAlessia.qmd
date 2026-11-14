@@ -90,7 +90,7 @@ g2 <- ggplot(graf.benford, aes(x = digito)) +
 ggsave("info/figuras/ej2_benford.png", g2, width = 8, height = 4.5, dpi = 150)
 g2
 ```
-Conclusión: los cantones con mayor MAD como Montes de Oca y Heredia tienen pocas transacciones, así que su desviación respecto a Benford se explica por el tamaño de muestra y no es evidencia de fraude.
+Conclusión: los cantones con mayor MAD como Montes de Oca, Guácimo y Heredia tienen pocas transacciones, así que su desviación respecto a Benford se explica por el tamaño de muestra y no es evidencia de fraude.
 
 ```{r}
 #| label: grafico-ej3
