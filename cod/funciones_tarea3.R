@@ -1,9 +1,4 @@
 # alerta.movil
-# Recibe:   df         data frame de transacciones (columnas fecha, id_tx)
-#           ventana    número de días anteriores para medir lo "normal"
-#           k.alerta   número de desviaciones estándar sobre la media
-# Devuelve: data frame con fecha, n.tx, media, desv, alerta
-#           (los primeros 'ventana' días quedan en NA: no se evalúan)
 alerta.movil <- function(df, ventana, k.alerta) {
   conteo <- aggregate(id_tx ~ fecha, data = df, FUN = length)
   names(conteo) <- c("fecha", "n.tx")
@@ -25,9 +20,6 @@ alerta.movil <- function(df, ventana, k.alerta) {
 }
 
 # benford.mad
-# Recibe:   x  vector numérico de montos
-# Devuelve: un número, la MAD (desviación absoluta media) entre la proporción
-#           observada de primeros dígitos (1 a 9) y la proporción de Benford
 benford.mad <- function(x) {
   x <- x[!is.na(x) & x > 0]
   digito <- x %/% 10^floor(log10(x))
@@ -37,11 +29,6 @@ benford.mad <- function(x) {
 }
 
 # benford.canton
-# Recibe:   df        data frame de transacciones (cod_canton, canal, monto_crc)
-#           canal     nombre del canal a auditar (texto)
-#           cantones  data frame con cod_canton y canton
-# Devuelve: data frame con cod_canton, canton, n, mad y clase (Nigrini),
-#           ordenado de mayor a menor MAD
 benford.canton <- function(df, canal, cantones) {
   d <- df[df$canal == canal, ]
   partes <- split(d$monto_crc, d$cod_canton)
@@ -66,15 +53,6 @@ benford.canton <- function(df, canal, cantones) {
 }
 
 # valor.acumulado
-# Recibe:   df           data frame de transacciones (fecha, canal, monto_crc)
-#           tasa.anual   tasa efectiva anual en decimal (0.09 = 9 %)
-#           canal        nombre del canal (texto)
-# Devuelve: lista con
-#           tabla         data frame (mes, monto, factor): monto total del canal
-#                         por mes y factor de capitalización (1 + i_m)^(12 - mes)
-#           tasa.mensual  tasa efectiva mensual equivalente
-#           va            valor acumulado al 31 de diciembre
-#           interes       intereses ganados (va - suma de montos)
 valor.acumulado <- function(df, tasa.anual, canal) {
   d <- df[df$canal == canal, ]
   mes <- as.integer(format(as.Date(d$fecha), "%m"))
