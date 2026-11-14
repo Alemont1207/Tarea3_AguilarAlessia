@@ -1,6 +1,8 @@
 ---
 title: "Tarea3_AguilarAlessia"
-format: html
+format:
+  html:
+    embed-resources: true
 editor: visual
 ---
 
